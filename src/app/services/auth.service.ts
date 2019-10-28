@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Observable } from "rxjs";
 import { delay, map } from "rxjs/operators";
+import {	Storage	}	from	'@ionic/storage';
 
 interface Usertoken {
-  username: string, 
+  username: string,
   token: string
 }
 interface SimulatedResponse {
@@ -43,7 +44,8 @@ export class AuthService {
   private usertoken: Usertoken;
   private lastLoginErrorMessage: string;
 
-  constructor() { 
+  constructor(
+    private storage: Storage) {
     this.usertoken = {
       username: '',
       token: ''
@@ -58,7 +60,6 @@ export class AuthService {
    * @return Observable<boolean> Observable que emite true si el proceso de login ha ido bien y emite false si ha ido mal
    */
   login(user: {username: string, password: string}): Observable<boolean> {
-    
     if (user.username === 'curso' && user.password === 'ionic') { 
       // Simulamos que hemos recibido la respuesta ResponseLoginOk$
       // Cambiamos la respuesta por un true
@@ -67,8 +68,10 @@ export class AuthService {
           respuesta => {
             this.usertoken = respuesta.usertoken;
             this.lastLoginErrorMessage = null;
-            localStorage.setItem('username',respuesta.usertoken.username);
-            localStorage.setItem('token', respuesta.usertoken.token);
+            this.storage.set('username', respuesta.usertoken.username);
+            this.storage.set('token', respuesta.usertoken.token);
+            // localStorage.setItem('username',respuesta.usertoken.username);
+            // localStorage.setItem('token', respuesta.usertoken.token);
             return true;
           })
       );
@@ -91,12 +94,15 @@ export class AuthService {
       username: '',
       token: ''
     };
-    localStorage.removeItem('username');
-    localStorage.removeItem('token');
+    this.storage.remove('username');
+    this.storage.remove('token');
+    // localStorage.removeItem('username');
+    // localStorage.removeItem('token');
   }
 
-  isLogged(): boolean {
-    if(localStorage.getItem('token')) {
+  async isLogged(): Promise <boolean> {
+    const token: string = await this.storage.get('token');
+    if (token) {
       return true;
     } else {
       return false;
